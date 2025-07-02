@@ -3,7 +3,7 @@ name: Build and Deploy
 on:
   push:
     branches:
-      - feat/dev_cnh
+      - main
 
 jobs:
   build-and-deploy:

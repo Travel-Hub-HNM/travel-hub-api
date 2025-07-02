@@ -1,0 +1,46 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - dev_cnh
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build JAR with Gradle
+        run: ./gradlew clean build -x test
+
+      - name: Package Deploy Files
+        run: |
+          # jar 복사
+          mkdir -p deploy/config
+          cp build/libs/*.jar deploy/
+          
+          # config 복사
+          cp bootstrap.yml logback-spring.xml deploy
+          sed -i -E "s/(active:\s*).*/\1${{ github.ref_name }}/" bootstrap.yml
+          cp config/{{ github.ref_name }}.yml deploy/config
+          
+          # package
+          tar -czf deploy_travel_hub.tar.gz -C deploy .
+
+      - name: Upload to EC2
+        uses: appleboy/scp-action@v0.1.3
+        with:
+          host: ${{ secrets.ORACLE_HOST}}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "deploy_travel_hub.tar.gz"
+          target: "/home/ubuntu/deploy"

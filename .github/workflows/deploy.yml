@@ -27,14 +27,14 @@ jobs:
           REF_NAME=${{ github.ref_name }}
           
           # jar 복사
-          ls -l build/libs/
           mkdir -p deploy/config
           cp build/libs/*.jar deploy/
           
           # config 복사
           cp bootstrap.yml logback-spring.xml deploy
           sed -i -E "s/(active:\s*).*/\1${REF_NAME}/" bootstrap.yml
-          cp config/{{ github.ref_name }}.yml deploy/config
+          cp config/${REF_NAME}.yml deploy/config
+          ls -l deploy/
           
           # package
           tar -czf deploy_travel_hub.tar.gz -C deploy .

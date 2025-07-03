@@ -13,6 +13,11 @@ java {
 	}
 }
 
+// plain jar 제외
+jar {
+	enabled = false
+}
+
 configurations {
 	compileOnly {
 		extendsFrom annotationProcessor

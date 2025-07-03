@@ -43,7 +43,7 @@ jobs:
         uses: appleboy/scp-action@v0.1.3
         with:
           host: ${{ secrets.ORACLE_HOST}}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          username: ${{ secrets.ORACLE_USER }}
+          key: ${{ secrets.ORACLE_KEY }}
           source: "deploy_travel_hub.tar.gz"
           target: "/home/ubuntu/deploy"

@@ -47,3 +47,26 @@ jobs:
           key: ${{ secrets.ORACLE_KEY }}
           source: "deploy_travel_hub.tar.gz"
           target: "/home/ubuntu/deploy"
+
+      - name: deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.ORACLE_HOST}}
+          username: ${{ secrets.ORACLE_USER }}
+          key: ${{ secrets.ORACLE_KEY }}
+          script: |
+           # java install check
+           if [ $(java --version 2>&1 | grep -q 'openjdk 17') ]; then
+              echo "Already Install Java!"
+           else
+              echo "Start Install Java 17"
+              sudo apt update
+              sudo apt install -y openjdk-17-jdk
+           fi
+            
+           # jar 압축 해제
+           REF_PATH=${{ secrets.TRAVEL_HUB_PATH }}
+           mkdir -p ${REF_PATH}
+           cd /home/ubuntu/deploy
+           tar -xzf deploy_travel_hub.tar.gz -C ${REF_PATH}
+           ls -l ${REF_PATH}

@@ -1,0 +1,97 @@
+name: CI/CD with Docker
+
+on:
+  push:
+    branches:
+      - docker
+
+jobs:
+  ci:
+    name: Run CI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # gradlew 실행권한 부여
+      - name: Grant execute permission to gradlew
+        run: chmod +x ./gradlew
+
+      # gradle caching - 빌드 시간 향상
+      - name: Gradle cashing
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      # 필요한 라이브러리를 다운로드
+      - name: dependency
+        run: ./gradlew dependencies
+
+      - name: Set up YML Settings
+        run: |
+          REF_NAME=${{ github.ref_name }}
+          YML_CONFIG=${{ secrets.TRAVEL_CONFIG }}
+          mkdir -p src/main/resources
+          echo "${YML_CONFIG}" | base64 -d > src/main/resources/application-${REF_NAME}.yml
+
+      - name: Build JAR with Gradle
+        run: ./gradlew clean build --no-daemon -x test
+
+      # build된 jar 파일 저장
+      - name: upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+         name: jar
+         path: build/libs/*.jar
+
+  cd:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    needs: ci
+
+    steps:
+      - name: code checkout
+        uses: actions/checkout@v4
+
+      # jar 파일 가져오기
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: jar
+          path: build/libs
+
+      # Dockerfile app 이미지 build & push
+      - name: Docker Log in
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: build Docker Image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_IMAGENAME }}:latest .
+
+      - name: push Docker Hub
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_IMAGENAME }}:latest
+
+      # ssh로 서버 접속해서 컨테이너 띄우기
+      - name: ssh to server and deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.ORACLE_HOST }}
+          username: ${{ secrets.ORACLE_USER }}
+          key: ${{ secrets.ORACLE_KEY }}
+          script: |
+            docker rmi -f ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_IMAGENAME }}:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_IMAGENAME }}:latest
+            cd /home/ubuntu/docker/app
+            docker compose up -d
+            docker image prune -f

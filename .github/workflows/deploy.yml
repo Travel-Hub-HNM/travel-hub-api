@@ -35,10 +35,6 @@ jobs:
           restore-keys: |
             gradle-${{ runner.os }}-
 
-      # 필요한 라이브러리를 다운로드
-      - name: dependency
-        run: ./gradlew dependencies
-
       - name: Set up YML Settings
         run: |
           REF_NAME=${{ github.ref_name }}

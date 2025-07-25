@@ -1,0 +1,8 @@
+services:
+  app:
+    image: kangminhyeok/travelhub-api:latest
+    container_name: travelhub-api
+    ports:
+      - "9700:9700"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker

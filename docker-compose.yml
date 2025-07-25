@@ -1,6 +1,6 @@
 services:
   app:
-    image: kangminhyeok/travelhub-api:latest
+    image: kangminhyeok/travel-hub-api:latest
     container_name: travelhub-api
     ports:
       - "9700:9700"

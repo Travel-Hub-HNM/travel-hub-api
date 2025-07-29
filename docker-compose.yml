@@ -1,7 +1,7 @@
 services:
   app:
     image: kangminhyeok/travel-hub-api:latest
-    container_name: travelhub-api
+    container_name: travel-hub-api
     ports:
       - "9700:9700"
     environment:

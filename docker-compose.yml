@@ -3,7 +3,7 @@ services:
     image: kangminhyeok/travel-hub-api:latest
     container_name: travel-hub-api
     ports:
-      - "9700:9700"
+      - "8009:8009"
     volumes:
       - ./logback-spring.xml:/app/logback-spring.xml
       - ./log:/app/log

@@ -47,6 +47,6 @@ jwt:
   secret: ${{TRAVEL_JWT}}
 
 server:
-  port: 9700
+  port: 8009
 logging:
   config: ./logback-spring.xml

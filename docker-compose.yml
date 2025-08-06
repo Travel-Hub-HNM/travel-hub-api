@@ -5,8 +5,6 @@ services:
     ports:
       - "8009:8009"
     volumes:
-      - ./logback-spring.xml:/app/logback-spring.xml
-      - ./log:/app/log
+      - ./log:./log
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - LOGGING_CONFIG=/app/logback-spring.xml

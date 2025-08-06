@@ -45,5 +45,3 @@ jwt:
 
 server:
   port: 9700
-logging:
-  config: ./logback-spring.xml

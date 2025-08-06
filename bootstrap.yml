@@ -1,8 +1,8 @@
 spring:
   profiles:
-    active: develop
+    active: local
 travel-hub:
   config:
     import: "file:./config/${spring.profiles.active}.yml"
 logging:
-  config: ./logback-spring.xml
+  config: ./src/main/resources/logback-spring.xml

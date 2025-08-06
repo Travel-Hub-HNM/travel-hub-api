@@ -5,6 +5,6 @@ services:
     ports:
       - "8009:8009"
     volumes:
-      - ./log:./log
+      - ./log:/app/log
     environment:
       - SPRING_PROFILES_ACTIVE=docker

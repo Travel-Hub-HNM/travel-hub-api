@@ -48,3 +48,5 @@ jwt:
 
 server:
   port: 8009
+logging:
+  config: ./src/main/resources/logback-spring.xml

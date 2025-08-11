@@ -1,6 +1,6 @@
 spring:
   profiles:
-    active: local
+    active: docker
 travel-hub:
   config:
     import: "file:./config/${spring.profiles.active}.yml"

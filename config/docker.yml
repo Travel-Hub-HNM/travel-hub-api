@@ -6,3 +6,5 @@ auth:
   user: nh_d4
 google:
   search-fields: places.id,places.formattedAddress,places.location,places.rating,places.displayName,places.photos,places.plusCode,places.addressComponents
+logging:
+  config: ./src/main/resources/logback-spring.xml

@@ -37,6 +37,7 @@ jobs:
 
       - name: Set up YML Settings
         run: |
+          echo "GITHUB_REF_NAME: ${{ github.ref_name }}"
           REF_NAME=${{ github.ref_name }}
           YML_CONFIG=${{ secrets.TRAVEL_DOCKER_CONFIG }}
           mkdir -p src/main/resources

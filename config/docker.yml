@@ -1,6 +1,6 @@
 storage:
   config:
-    path: "~/.oci/config"
+    path: "/app/.oci/config"
 auth:
   enable: false
   user: nh_d4

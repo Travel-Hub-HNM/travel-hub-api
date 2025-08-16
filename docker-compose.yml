@@ -4,5 +4,7 @@ services:
     container_name: travel-hub-api
     ports:
       - "8009:8009"
+    volumes:
+      - ./.oci/:/app/.oci/
     environment:
       - SPRING_PROFILES_ACTIVE=docker

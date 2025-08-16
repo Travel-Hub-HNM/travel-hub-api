@@ -1,6 +1,8 @@
 FROM openjdk:17-jdk-slim
 
-COPY build/libs/*.jar /app/app.jar
-COPY logback-spring.xml /app/logback-spring.xml
+WORKDIR /app
 
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+COPY build/libs/*.jar app.jar
+COPY src/main/resources/logback-spring.xml logback-spring.xml
+
+ENTRYPOINT ["java", "-jar", "app.jar"]

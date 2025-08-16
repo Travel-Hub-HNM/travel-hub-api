@@ -6,5 +6,5 @@ services:
       - "9700:9700"
     volumes:
       - /home/ubuntu/docker/app/storage-auth/config:/root/.oci/config
-      - /home/ubuntu/docker/app/storage-auth/'jonahon@naver.com_2024-12-27T00_38_33.588Z.pem':/app/oracle/storage/'jonahon@naver.com_2024-12-27T00_38_33.588Z.pem'
+      - /home/ubuntu/docker/app/storage-auth/jonahon@naver.com_2024-12-27T00_38_33.588Z.pem:/app/oracle/storage/jonahon@naver.com_2024-12-27T00_38_33.588Z.pem
       - /home/ubuntu/docker/app/log:/app/log

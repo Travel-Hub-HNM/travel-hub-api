@@ -1,4 +1,4 @@
-name: Build and Deploy
+name: CI/CD with Docker
 
 on:
   push:
@@ -6,11 +6,12 @@ on:
       - prod
 
 jobs:
-  build-and-deploy:
+  ci:
+    name: Run CI
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up JDK
@@ -18,6 +19,21 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+
+      # gradlew 실행권한 부여
+      - name: Grant execute permission to gradlew
+        run: chmod +x ./gradlew
+
+      # gradle caching - 빌드 시간 향상
+      - name: Gradle cashing
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
 
       - name: Set up YML Settings
         run: |
@@ -29,56 +45,56 @@ jobs:
       - name: Build JAR with Gradle
         run: ./gradlew clean build --no-daemon -x test
 
-      - name: Package Deploy Files
-        run: |
-          REF_NAME=${{ github.ref_name }}
-          
-          # jar 복사
-          mkdir -p deploy/config
-          cp build/libs/*.jar deploy/
-          
-          # config 복사
-          sed -i -E 's/^([[:space:]]*active:[[:space:]]*).*/\1'"$REF_NAME"'/' bootstrap.yml
-          cp bootstrap.yml logback-spring.xml deploy
-          
-          cp config/${REF_NAME}.yml deploy/config
-          ls -l deploy/
-          
-          # package
-          tar -czf deploy_travel_hub.tar.gz -C deploy .
-
-      - name: Upload to EC2
-        uses: appleboy/scp-action@v0.1.3
+      # build 된 jar 파일 저장
+      - name: upload artifact
+        uses: actions/upload-artifact@v4
         with:
-          host: ${{ secrets.ORACLE_HOST}}
-          username: ${{ secrets.ORACLE_USER }}
-          key: ${{ secrets.ORACLE_KEY }}
-          source: "deploy_travel_hub.tar.gz"
-          target: "/home/ubuntu/deploy"
+          name: jar
+          path: build/libs/*.jar
+    outputs:
+      REF_NAME: ${{ github.ref_name }}
+  cd:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    needs: ci
+    env:
+      REF_NAME: ${{ needs.ci.outputs.REF_NAME }}
 
-      - name: deploy to EC2
+    steps:
+      - name: code checkout
+        uses: actions/checkout@v4
+
+      # jar 파일 가져오기
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: jar
+          path: build/libs
+
+      # Dockerfile app 이미지 build & push
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker Log in
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build and Push Docker Image (Multi-platform)
+        run: |
+          docker buildx build --platform linux/amd64,linux/arm64 \
+            --build-arg REF_NAME=$REF_NAME \
+            -t ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_IMAGENAME }}:latest \
+            --push .
+
+      # ssh로 서버 접속해서 컨테이너 띄우기
+      - name: ssh to server and deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.ORACLE_HOST}}
+          host: ${{ secrets.ORACLE_HOST }}
           username: ${{ secrets.ORACLE_USER }}
           key: ${{ secrets.ORACLE_KEY }}
           script: |
-            # java install check
-            if java --version 2>&1 | grep -q 'openjdk 17'; then
-               echo "Already Install Java!"
-            else
-               echo "Start Install Java 17"
-               sudo apt update
-               sudo apt install -y openjdk-17-jdk
-            fi
-            
-            # jar 압축 해제
-            REF_PATH=${{ secrets.TRAVEL_HUB_PATH }}
-            mkdir -p ${REF_PATH}
-            cd /home/ubuntu/deploy
-            sudo tar -xzf deploy_travel_hub.tar.gz -C ${REF_PATH} --overwrite
-            ls -l ${REF_PATH}
-            
-            # jar 재시작
-            PROCESS_NAME=travel-hub-api
-            sudo systemctl restart $PROCESS_NAME
+            docker rmi -f ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_IMAGENAME }}:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_IMAGENAME }}:latest
+            cd /home/ubuntu/docker/app
+            docker compose up -d
+            docker image prune -f

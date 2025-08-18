@@ -95,6 +95,6 @@ jobs:
           script: |
             docker rmi -f ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_IMAGENAME }}:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_IMAGENAME }}:latest
-            cd /home/ubuntu/docker/app
+            cd /usr/local/travel-hub/api
             docker compose up -d
             docker image prune -f
